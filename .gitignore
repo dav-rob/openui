@@ -2,3 +2,7 @@
 nohup.out
 .cache/
 .env
+backend/.claude/settings.local.json
+backend/server.log
+frontend/package-lock.json
+backup
