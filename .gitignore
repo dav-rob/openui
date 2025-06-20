@@ -6,3 +6,4 @@ backend/.claude/settings.local.json
 backend/server.log
 frontend/package-lock.json
 backup
+.deactivated-husky
