@@ -17,7 +17,7 @@ import json
 from datetime import datetime
 from openui.util import gen_screenshots
 
-from promptsearch import PromptSearch, PromptModel
+from .promptsearch import PromptSearch, PromptModel
 
 
 last: datetime | None = None
@@ -97,7 +97,7 @@ emoji: 🎉
 class OpenUIModel(PromptModel):
     prompt_template: str
     model_name: Optional[str] = "gpt-3.5-turbo"
-    take_screenshot: Optional[bool] = True
+    take_screenshot: Optional[bool] = False
     temp: Optional[float] = 0.3
     _iteration: int = 0
     # "gpt-3.5-turbo-1106"
@@ -182,11 +182,19 @@ class OpenUIModel(PromptModel):
         if self.take_screenshot:
             name = f"prompt-{self._iteration}"
             self._iteration += 1
-            await self.screenshot(parsed["html"], name)
-            parsed["desktop_img"] = f"./{self.model_dir}/{name}.combined.png"
-            parsed["mobile_img"] = f"./{self.model_dir}/{name}.combined.mobile.png"
-            parsed["desktop_uri"] = self.data_url(base_dir / parsed["desktop_img"])
-            parsed["mobile_uri"] = self.data_url(base_dir / parsed["mobile_img"])
+            try:
+                await self.screenshot(parsed["html"], name)
+                parsed["desktop_img"] = f"./{self.model_dir}/{name}.combined.png"
+                parsed["mobile_img"] = f"./{self.model_dir}/{name}.combined.mobile.png"
+                parsed["desktop_uri"] = self.data_url(base_dir / parsed["desktop_img"])
+                parsed["mobile_uri"] = self.data_url(base_dir / parsed["mobile_img"])
+            except Exception as e:
+                print(f"Screenshot failed: {e}")
+                # Continue without screenshots
+                parsed["desktop_img"] = None
+                parsed["mobile_img"] = None
+                parsed["desktop_uri"] = None
+                parsed["mobile_uri"] = None
         return parsed
 
     async def screenshot(self, html: str, name: str):
@@ -291,43 +299,67 @@ class OpenUIScoringModel(Model):
 name: {prediction['name']}
 emoji: {prediction['emoji']}
 """
+        
+        # Check if screenshots are available
+        has_screenshots = (
+            prediction.get("desktop_img") is not None and 
+            prediction.get("mobile_img") is not None
+        )
+        
+        if has_screenshots:
+            # Full evaluation with screenshots
+            content = [
+                {"type": "text", "text": user_message},
+                {
+                    "type": "text",
+                    "text": "Screenshot of the light and dark desktop versions:",
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": self.data_url(
+                            base_dir / prediction["desktop_img"]
+                        )
+                    },
+                },
+                {
+                    "type": "text",
+                    "text": "Screenshot of the light and dark mobile versions:",
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": self.data_url(
+                            base_dir / prediction["mobile_img"]
+                        )
+                    },
+                },
+                {
+                    "type": "text",
+                    "text": "Please assess this prompt against the images and provide your score.",
+                },
+            ]
+        else:
+            # Text-only evaluation without screenshots
+            content = [
+                {"type": "text", "text": user_message},
+                {
+                    "type": "text", 
+                    "text": f"HTML Code:\n{prediction.get('html', 'N/A')}"
+                },
+                {
+                    "type": "text",
+                    "text": "Please assess this prompt against the HTML code. Note: Screenshots are not available, so focus on relevance and code quality. For media and contrast scores, provide reasonable estimates based on the HTML structure and classes used.",
+                },
+            ]
+        
         response = await client.chat.completions.create(
             model=self.model_name,
             messages=[
                 {"role": "system", "content": self.system_prompt},
                 {
                     "role": "user",
-                    "content": [
-                        {"type": "text", "text": user_message},
-                        {
-                            "type": "text",
-                            "text": "Screenshot of the light and dark desktop versions:",
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": self.data_url(
-                                    base_dir / prediction["desktop_img"]
-                                )
-                            },
-                        },
-                        {
-                            "type": "text",
-                            "text": "Screenshot of the light and dark mobile versions:",
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": self.data_url(
-                                    base_dir / prediction["mobile_img"]
-                                )
-                            },
-                        },
-                        {
-                            "type": "text",
-                            "text": "Please assess this prompt against the images and provide your score.",
-                        },
-                    ],
+                    "content": content,
                 },
             ],
             temperature=self.temp,
@@ -379,10 +411,10 @@ async def run(row=0, bad=False):
     pt("Result:", res)
 
 
-async def eval(mod="gpt-3.5-turbo"):
+async def eval(mod="gpt-3.5-turbo", screenshots=False):
     pt("Initializing weave")
     weave.init("openui-dev")
-    model = OpenUIModel(prompt_template=SYSTEM_PROMPT, model_name=mod)
+    model = OpenUIModel(prompt_template=SYSTEM_PROMPT, model_name=mod, take_screenshot=screenshots)
     pt("Loading dataset")
     dataset = weave.ref("eval:v0").get()
     # dataset = Dataset(
@@ -418,11 +450,20 @@ def run_prompt_search(mod: str):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        mod = sys.argv[1]
+    # Parse arguments
+    args = [arg for arg in sys.argv[1:] if not arg.startswith("--")]
+    flags = [arg for arg in sys.argv[1:] if arg.startswith("--")]
+    
+    # Get model name
+    if args:
+        mod = args[0]
     else:
         mod = "gpt-3.5-turbo"
+    
+    # Check for screenshots flag
+    screenshots = "--screenshots" in flags
+    
     if os.getenv("HOGWILD"):
         run_prompt_search(mod)
     else:
-        asyncio.run(eval(mod))
+        asyncio.run(eval(mod, screenshots=screenshots))

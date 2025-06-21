@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weave Evaluations Tutorial - OpenUI Example</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧪 Weave Evaluations Tutorial</h1>
+            <p class="subtitle">Learn evaluation systems with the OpenUI project</p>
+        </header>
+
+        <nav class="progress-nav">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="nav-buttons">
+                <button id="prevBtn" onclick="changeSection(-1)">← Previous</button>
+                <span id="sectionCounter">1 / 8</span>
+                <button id="nextBtn" onclick="changeSection(1)">Next →</button>
+            </div>
+        </nav>
+
+        <main id="tutorialContent">
+            <!-- Content will be dynamically loaded here -->
+        </main>
+
+        <div class="code-playground" id="codePlayground" style="display: none;">
+            <h3>🚀 Try it yourself</h3>
+            <div class="playground-content">
+                <textarea id="codeEditor" placeholder="// Your code here..."></textarea>
+                <button onclick="runCode()">Run Code</button>
+                <div id="output"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="tutorial.js"></script>
+</body>
+</html>

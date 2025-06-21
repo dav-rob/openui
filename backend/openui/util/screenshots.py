@@ -44,7 +44,7 @@ async def gen_screenshots(root_name, html, img_dir):
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch(headless=True)
         page = await browser.new_page()
-        await page.goto("https://localhost:5173/annotator/index.html")
+        await page.goto("http://127.0.0.1:8080/annotator/")
 
         combined_img = img_dir / f"{root_name}.combined"
         p(f"Capturing {root_name}")
@@ -60,16 +60,18 @@ async def gen_screenshots(root_name, html, img_dir):
         try:
             await page.wait_for_function(
                 "!!document.querySelector('#exampleWrapper')",
+                timeout=10000  # 10 seconds
             )
             p(".")
             await page.wait_for_function(
-                "() => Array.from(document.images).every((img) => img.complete && (typeof img.naturalWidth != 'undefined'))"
+                "() => Array.from(document.images).every((img) => img.complete && (typeof img.naturalWidth != 'undefined'))",
+                timeout=15000  # 15 seconds
             )
             # Temp sleep to ensure we fade in...
             await asyncio.sleep(0.5)
         except TimeoutError:
-            print("Timed out waiting for images to load")
-            return None
+            print("Timed out waiting for images to load, continuing anyway...")
+            await asyncio.sleep(1)  # Give it a moment anyway
 
         # Mobile
         # Not sure what's up here

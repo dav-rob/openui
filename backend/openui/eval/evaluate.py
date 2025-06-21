@@ -36,7 +36,6 @@ def data_url(file_path):
 base_dir = Path(__file__).parent / "datasets"
 
 
-@weave.type()
 class EvaluateQualityModel(Model):
     system_message: str
     model_name: str = "gpt-4-vision-preview"
@@ -154,12 +153,12 @@ Output a JSON object with the following structure:
     }
 """
 )
-model = EvaluateQualityModel(SYSTEM_MESSAGE)
+model = EvaluateQualityModel(system_message=SYSTEM_MESSAGE)
 
 
 async def run(row=0, bad=False):
     pt("Initializing weave")
-    weave.init("openui-test-21")
+    weave.init("openui-dev")
     pt("Loading dataset")
     dataset = weave.ref("flowbite").get()
     pt("Running predict, row:", row)
@@ -174,7 +173,7 @@ async def run(row=0, bad=False):
 
 async def eval(ds="gpt-3.5-turbo"):
     pt("Initializing weave")
-    weave.init("openui-test-21")
+    weave.init("openui-dev")
     pt("Loading dataset", ds)
     dataset = weave.ref(ds).get()
     evaluation = Evaluation(
