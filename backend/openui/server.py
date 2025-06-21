@@ -92,10 +92,9 @@ async def lifespan(app: FastAPI):
     
     # Initialize Weave once at startup
     if wandb_enabled:
-        import weave
+        from .wandb_config import init_weave_with_project
         os.environ["WEAVE_PRINT_CALL_LINK"] = "true"
-        weave.init(os.getenv("WANDB_PROJECT", "default_project"))
-        print(f"Weave initialized for project: {os.getenv('WANDB_PROJECT', 'default_project')}", file=sys.stderr)
+        init_weave_with_project(default="default_project")
     
     yield
     # any more cleanup here?
@@ -674,7 +673,8 @@ class Server(uvicorn.Server):
 
     def run_with_wandb(self):
         if wandb_enabled:
-            weave.init(os.getenv("WANDB_PROJECT", "default_project"))
+            from .wandb_config import init_weave_with_project
+            init_weave_with_project(default="default_project")
         self.run()
 
     @contextlib.contextmanager

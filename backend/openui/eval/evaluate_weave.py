@@ -410,7 +410,8 @@ async def scores(prompt: str, model_output: dict) -> dict:
 
 async def run(row=0, bad=False):
     pt("Initializing weave")
-    weave.init(os.getenv("WANDB_PROJECT", "default_project"))
+    from ..wandb_config import init_weave_with_project
+    init_weave_with_project("default_project")
     model = OpenUIModel(SYSTEM_PROMPT)
     pt("Loading dataset")
     dataset = weave.ref("flowbite").get()
@@ -426,7 +427,8 @@ async def run(row=0, bad=False):
 
 async def eval(mod="gpt-3.5-turbo", screenshots=False):
     pt("Initializing weave")
-    weave.init(os.getenv("WANDB_PROJECT", "default_project"))
+    from ..wandb_config import init_weave_with_project
+    init_weave_with_project("default_project")
     model = OpenUIModel(prompt_template=SYSTEM_PROMPT, model_name=mod, take_screenshot=screenshots)
     pt("Loading dataset")
     dataset = weave.ref("eval:v0").get()
@@ -443,7 +445,8 @@ async def eval(mod="gpt-3.5-turbo", screenshots=False):
 
 
 def run_prompt_search(mod: str):
-    weave.init(os.getenv("WANDB_PROJECT", "default_project"))
+    from ..wandb_config import init_weave_with_project
+    init_weave_with_project("default_project")
     model = OpenUIModel(prompt_template=SYSTEM_PROMPT, model_name=mod)
     pt("Loading dataset")
     dataset = weave.ref("eval").get()

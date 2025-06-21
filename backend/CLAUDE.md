@@ -94,6 +94,7 @@ HOGWILD=1 python -m openui.eval.evaluate_weave
 ### Evaluation Results
 
 Successful evaluations show:
+
 - **Component generation** - HTML with TailwindCSS classes
 - **Multi-dimensional scores** - Relevance (4.0), Polish (3.3), Media (3.0), Contrast (3.0)
 - **Weave trace URLs** - 🍩 links for debugging
@@ -114,6 +115,14 @@ curl http://127.0.0.1:8080/annotator/
 # Monitor evaluation progress
 tail -f server.log
 ```
+
+## Weave Configuration
+
+Weave is initialized automatically from `.env` files or environment variables using init_weave_with_project() The system uses `WANDB_PROJECT` with this precedence:
+
+1. Environment variables (highest)
+2. `.env` file values
+3. Default fallback
 
 ## Environment Configuration
 
@@ -161,35 +170,41 @@ git push --no-verify
 To test UI generation and Weave tracing:
 
 1. **Start server in background**:
+
    ```bash
    python -m openui --dev > server.log 2>&1 &
    ```
 
 2. **Navigate to application**:
+
    ```python
    mcp__playwright__playwright_navigate(url="http://127.0.0.1:8080", headless=False)
    ```
 
 3. **Take initial screenshot** (helpful for debugging):
+
    ```python
    mcp__playwright__playwright_screenshot(name="initial_state", fullPage=True)
    ```
 
 4. **Fill the prompt textarea**:
+
    ```python
    # Use generic selector first, then specific if needed
    mcp__playwright__playwright_fill(
-       selector="textarea", 
+       selector="textarea",
        value="Create a simple todo list component"
    )
    ```
 
 5. **Submit the form**:
+
    ```python
    mcp__playwright__playwright_click(selector="button[type=\"submit\"]")
    ```
 
 6. **Monitor server logs for results**:
+
    ```bash
    # Check for Weave trace URLs and completion success
    tail -10 server.log
@@ -216,11 +231,13 @@ To confirm that the WeaveContextMiddleware is properly propagating context and g
 #### Quick Test Procedure
 
 1. **Start server and clear logs**:
+
    ```bash
    python -m openui --dev > server.log 2>&1 &
    ```
 
 2. **Verify Weave initialization** (should see this once at startup):
+
    ```bash
    tail -5 server.log
    # Look for: "weave: View Weave data at https://wandb.ai/..."
@@ -228,6 +245,7 @@ To confirm that the WeaveContextMiddleware is properly propagating context and g
    ```
 
 3. **Trigger UI generation** (using Playwright or browser):
+
    ```python
    # Via Playwright
    mcp__playwright__playwright_navigate(url="http://127.0.0.1:8080", headless=False)
@@ -291,13 +309,13 @@ If traces aren't appearing:
 class WeaveContextMiddleware:
     def __init__(self, app):
         self.app = app
-        
+
     async def __call__(self, scope, receive, send):
         if scope["type"] == "http":
             context = copy_context()
             return await context.run(self._handle_request, scope, receive, send)
         return await self.app(scope, receive, send)
-    
+
     async def _handle_request(self, scope, receive, send):
         return await self.app(scope, receive, send)
 
@@ -306,12 +324,14 @@ app.add_middleware(WeaveContextMiddleware)
 ```
 
 **Benefits**:
+
 - ✅ Single Weave initialization at server startup
-- ✅ No performance overhead from repeated `weave.init()` calls  
+- ✅ No performance overhead from repeated `weave.init()` calls
 - ✅ Proper async context propagation
 - ✅ Full tracing functionality maintained
 
 **Previous workaround** (now unnecessary):
+
 ```python
 # OLD: Required weave.init() in each traced function
 @weave.op()

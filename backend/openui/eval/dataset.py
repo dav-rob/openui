@@ -1,6 +1,5 @@
 import asyncio
 import csv
-import os
 import weave
 from weave import Dataset
 from pathlib import Path
@@ -23,7 +22,8 @@ except ImportError:
 
 # TODO: Maybe use this for finetuning
 async def flowbite():
-    weave.init(os.getenv("WANDB_PROJECT", "default_project"))
+    from ..wandb_config import init_weave_with_project
+    init_weave_with_project("default_project")
 
     data_dir = Path(__file__).parent / "components"
 
@@ -64,7 +64,8 @@ async def flowbite():
 
 
 async def publish(model):
-    weave.init(os.getenv("WANDB_PROJECT", "default_project"))
+    from ..wandb_config import init_weave_with_project
+    init_weave_with_project("default_project")
 
     ds_dir = Path(__file__).parent / "datasets"
 

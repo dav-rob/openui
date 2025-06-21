@@ -1,6 +1,5 @@
 import asyncio
 import sys
-import os
 import textwrap
 from weave import Evaluation, Model
 
@@ -172,7 +171,8 @@ model = EvaluateQualityModel(system_message=SYSTEM_MESSAGE)
 
 async def run(row=0, bad=False):
     pt("Initializing weave")
-    weave.init(os.getenv("WANDB_PROJECT", "default_project"))
+    from ..wandb_config import init_weave_with_project
+    init_weave_with_project("default_project")
     pt("Loading dataset")
     dataset = weave.ref("flowbite").get()
     pt("Running predict, row:", row)
@@ -187,7 +187,8 @@ async def run(row=0, bad=False):
 
 async def eval(ds="gpt-3.5-turbo"):
     pt("Initializing weave")
-    weave.init(os.getenv("WANDB_PROJECT", "default_project"))
+    from ..wandb_config import init_weave_with_project
+    init_weave_with_project("default_project")
     pt("Loading dataset", ds)
     dataset = weave.ref(ds).get()
     evaluation = Evaluation(
