@@ -94,8 +94,8 @@ async def lifespan(app: FastAPI):
     if wandb_enabled:
         import weave
         os.environ["WEAVE_PRINT_CALL_LINK"] = "true"
-        weave.init(os.getenv("WANDB_PROJECT", "openui-dev"))
-        print(f"Weave initialized for project: {os.getenv('WANDB_PROJECT', 'openui-dev')}", file=sys.stderr)
+        weave.init(os.getenv("WANDB_PROJECT", "default_project"))
+        print(f"Weave initialized for project: {os.getenv('WANDB_PROJECT', 'default_project')}", file=sys.stderr)
     
     yield
     # any more cleanup here?
@@ -156,7 +156,7 @@ if os.getenv("WEAVE_PRINT_CALL_LINK") is None:
 async def generate_ui_completion(data: dict, user_id: str, input_tokens: int):
     """Generate UI completion using various LLM providers - traced by Weave"""
     # Ensure Weave tracing is active in this context
-    # weave.init(os.getenv('WANDB_PROJECT', 'test-openui'))
+    # weave.init(os.getenv('WANDB_PROJECT', 'default_project'))
     # TODO: refactor all these blocks into one once Ollama supports vision
     # OpenAI Models
     if data.get("model").startswith("gpt"):
@@ -674,7 +674,7 @@ class Server(uvicorn.Server):
 
     def run_with_wandb(self):
         if wandb_enabled:
-            weave.init(os.getenv("WANDB_PROJECT", "openui-dev"))
+            weave.init(os.getenv("WANDB_PROJECT", "default_project"))
         self.run()
 
     @contextlib.contextmanager

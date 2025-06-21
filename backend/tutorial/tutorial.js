@@ -79,7 +79,7 @@ await evaluation.evaluate(model)
             <p>Here's what a complete OpenUI evaluation looks like:</p>
             
             <pre><code class="language-python"># 1. Initialize Weave
-weave.init("openui-dev")
+weave.init(os.getenv("WANDB_PROJECT", "default_project"))
 
 # 2. Setup evaluation
 evaluation = Evaluation(
@@ -160,11 +160,19 @@ playwright install</code></pre>
             <h3>🚀 Quick Test</h3>
             <p>Verify your setup by running a simple evaluation:</p>
 
-            <pre><code class="language-bash"># Start the dev server
+            <pre><code class="language-bash"># First time setup - publish dataset to Weave
+python -m openui.eval.dataset
+
+# Start the dev server  
 python -m openui --dev 2>&1 | tee server.log
 
 # In another terminal, run evaluation
 python -m openui.eval.evaluate_weave</code></pre>
+
+            <div class="warning-box">
+                <h4>📋 Required First Step</h4>
+                <p>The <code>python -m openui.eval.dataset</code> command publishes the evaluation dataset to Weave as "eval:v0". This is required before running any evaluations - the system will fail with a missing dataset error otherwise.</p>
+            </div>
 
             <button class="interactive-button" onclick="showCodeExample('setup')">
                 🔍 Show Setup Verification Code
@@ -284,9 +292,10 @@ results = await evaluation.evaluate(model)
             <p>Datasets are the foundation of good evaluations. Let's learn how to create, manage, and version them effectively.</p>
 
             <h3>📝 Dataset Creation</h3>
-            <p>OpenUI datasets are simple CSV files that get published to Weave:</p>
+            <p>OpenUI datasets start as simple CSV files that get published to Weave:</p>
 
-            <pre><code class="language-csv">prompt,name,emoji
+            <pre><code class="language-csv"># openui/eval/datasets/eval.csv
+prompt,name,emoji
 "Create a simple button component","Button","🔘"
 "Make a card component with header and content","Card","🃏"
 "Build a navigation bar","Navigation","🧭"</code></pre>
@@ -294,29 +303,44 @@ results = await evaluation.evaluate(model)
             <div class="concept-card">
                 <h3>🏗️ Dataset Publishing Workflow</h3>
                 <ol class="step-list">
-                    <li>Create CSV file with test cases</li>
-                    <li>Use Weave to publish dataset</li>
-                    <li>Reference dataset in evaluations</li>
-                    <li>Version and iterate as needed</li>
+                    <li><strong>Create CSV</strong> - Simple test cases in <code>datasets/eval.csv</code></li>
+                    <li><strong>Publish to Weave</strong> - One-time setup command</li>
+                    <li><strong>Reference in evaluations</strong> - Use <code>weave.ref("eval:v0")</code></li>
+                    <li><strong>Version automatically</strong> - Weave handles versioning</li>
                 </ol>
             </div>
 
-            <h3>🚀 Publishing Code</h3>
-            <p>Here's how OpenUI publishes datasets:</p>
+            <h3>🚀 Publishing Command</h3>
+            <p><strong>Critical first step</strong> - You must publish the dataset before running evaluations:</p>
 
-            <pre><code class="language-python">import pandas as pd
-import weave
+            <pre><code class="language-bash"># Required first-time setup
+python -m openui.eval.dataset
 
-# Initialize Weave
-weave.init("openui-dev")
+# This reads eval.csv and publishes to Weave as "eval:v0"</code></pre>
 
-# Load data from CSV
-data = pd.read_csv("datasets/eval.csv")
-rows = data.to_dict('records')
+            <h3>📄 Publishing Code (in dataset.py)</h3>
+            <p>Here's how OpenUI's dataset publisher works:</p>
 
-# Publish to Weave
-dataset = weave.Dataset(name="eval", rows=rows)
-weave.publish(dataset)</code></pre>
+            <pre><code class="language-python"># openui/eval/dataset.py
+async def publish(model):
+    weave.init("openui-dev")
+    
+    ds = []
+    with open(ds_dir / "eval.csv", "r") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            ds.append(row)  # Load the 3 CSV rows
+    
+    dataset = Dataset(name='eval', rows=ds)
+    dataset_ref = weave.publish(dataset)  # Publishes as "eval"
+    print("Published dataset:", dataset_ref)</code></pre>
+
+            <div class="warning-box">
+                <h4>⚠️ Dataset Publishing Requirement</h4>
+                <p>If you skip the dataset publishing step, evaluations will fail with:</p>
+                <pre><code>weave.ref("eval:v0").get()  # ❌ Dataset not found error</code></pre>
+                <p>Always run <code>python -m openui.eval.dataset</code> before your first evaluation!</p>
+            </div>
 
             <h3>📚 Dataset Best Practices</h3>
             <div class="feature-grid">
@@ -614,6 +638,14 @@ def accessibility_score(example: dict, prediction: dict) -> float:
         title: '🚀 Running Evaluations',
         content: `
             <p>Now let's put it all together and run complete evaluations! OpenUI provides flexible options for different use cases.</p>
+
+            <div class="warning-box">
+                <h4>⚠️ First Time Setup Required</h4>
+                <p>Before running evaluations, you must publish the dataset:</p>
+                <pre><code class="language-bash"># One-time setup - publish evaluation dataset
+python -m openui.eval.dataset</code></pre>
+                <p>This reads the CSV file and publishes it to Weave as <code>"eval:v0"</code>.</p>
+            </div>
 
             <h3>⚡ Quick Evaluation</h3>
             <p>Run a basic evaluation without screenshots (fast for development):</p>

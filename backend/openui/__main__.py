@@ -130,8 +130,8 @@ if __name__ == "__main__":
                 import weave
                 # Ensure Weave prints call links to console
                 os.environ["WEAVE_PRINT_CALL_LINK"] = "true"
-                weave.init(os.getenv("WANDB_PROJECT", "openui-dev"))
-                print(f"Weave initialized for project: {os.getenv('WANDB_PROJECT', 'openui-dev')}", file=sys.stderr)
+                weave.init(os.getenv("WANDB_PROJECT", "default_project"))
+                print(f"Weave initialized for project: {os.getenv('WANDB_PROJECT', 'default_project')}", file=sys.stderr)
             
             # TODO: hot reload wasn't working with the server approach, and ctrl-C doesn't
             # work with the uvicorn.run approach, so here we are

@@ -1,11 +1,25 @@
 import asyncio
 import sys
+import os
 import textwrap
 from weave import Evaluation, Model
 
+# Load environment variables from .env file
+from pathlib import Path
+try:
+    from dotenv import load_dotenv
+    # Look for .env in parent directory (backend root)
+    env_path = Path(__file__).parent.parent.parent / ".env"
+    if env_path.exists():
+        load_dotenv(env_path)
+    else:
+        # Try current working directory
+        load_dotenv()
+except ImportError:
+    pass
+
 # from .model import EvaluateQualityModel
 import weave
-from pathlib import Path
 import base64
 import json
 from datetime import datetime
@@ -158,7 +172,7 @@ model = EvaluateQualityModel(system_message=SYSTEM_MESSAGE)
 
 async def run(row=0, bad=False):
     pt("Initializing weave")
-    weave.init("openui-dev")
+    weave.init(os.getenv("WANDB_PROJECT", "default_project"))
     pt("Loading dataset")
     dataset = weave.ref("flowbite").get()
     pt("Running predict, row:", row)
@@ -173,7 +187,7 @@ async def run(row=0, bad=False):
 
 async def eval(ds="gpt-3.5-turbo"):
     pt("Initializing weave")
-    weave.init("openui-dev")
+    weave.init(os.getenv("WANDB_PROJECT", "default_project"))
     pt("Loading dataset", ds)
     dataset = weave.ref(ds).get()
     evaluation = Evaluation(

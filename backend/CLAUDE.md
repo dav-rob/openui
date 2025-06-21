@@ -52,26 +52,67 @@ grep -i error server.log
 
 ## Evaluation System
 
-**⚠️ Note**: Evaluation system requires additional dependencies and may have unresolved configuration issues.
+The evaluation system tests UI component generation quality using Weave evaluations with multi-dimensional scoring.
 
 ### Installing Evaluation Dependencies
 
 ```bash
-# Install evaluation extras (may need troubleshooting)
+# Install evaluation extras
 uv sync --frozen --extra eval
+
+# Install Playwright browsers (optional, for screenshots)
+playwright install
 ```
 
-### Running Evaluations - theoretical, this has not been confirmed
+### Setting Up Evaluations
+
+**First time setup** - Publish the evaluation dataset to Weave:
 
 ```bash
-# Basic evaluation (experimental)
+# Publish the 3-example test dataset (one-time setup)
+python -m openui.eval.dataset
+```
+
+This publishes the CSV dataset from `openui/eval/datasets/eval.csv` to Weave as `"eval:v0"`.
+
+### Running Evaluations
+
+```bash
+# Basic evaluation (text-only, fast)
 python -m openui.eval.evaluate_weave
 
-# With specific model (experimental)
-python -m openui.eval.evaluate_weave gpt-4-turbo
+# With screenshots (slower, requires server)
+python -m openui.eval.evaluate_weave --screenshots
 
-# Prompt search optimization (experimental)
+# With specific model
+python -m openui.eval.evaluate_weave gpt-4-turbo --screenshots
+
+# Prompt search optimization
 HOGWILD=1 python -m openui.eval.evaluate_weave
+```
+
+### Evaluation Results
+
+Successful evaluations show:
+- **Component generation** - HTML with TailwindCSS classes
+- **Multi-dimensional scores** - Relevance (4.0), Polish (3.3), Media (3.0), Contrast (3.0)
+- **Weave trace URLs** - 🍩 links for debugging
+- **Performance metrics** - Model latency averaging ~1.2s
+
+### Troubleshooting Evaluations
+
+```bash
+# Check if dataset exists
+python -c "import weave; weave.init('openui-dev'); print(weave.ref('eval:v0').get())"
+
+# Re-publish dataset if missing
+python -m openui.eval.dataset
+
+# Check server is running (needed for screenshots)
+curl http://127.0.0.1:8080/annotator/
+
+# Monitor evaluation progress
+tail -f server.log
 ```
 
 ## Environment Configuration

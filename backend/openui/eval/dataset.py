@@ -1,15 +1,29 @@
 import asyncio
 import csv
+import os
 import weave
 from weave import Dataset
 from pathlib import Path
 import json
 import sys
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    # Look for .env in parent directory (backend root)
+    env_path = Path(__file__).parent.parent.parent / ".env"
+    if env_path.exists():
+        load_dotenv(env_path)
+    else:
+        # Try current working directory
+        load_dotenv()
+except ImportError:
+    pass
+
 
 # TODO: Maybe use this for finetuning
 async def flowbite():
-    weave.init("openui-test-20")
+    weave.init(os.getenv("WANDB_PROJECT", "default_project"))
 
     data_dir = Path(__file__).parent / "components"
 
@@ -50,7 +64,7 @@ async def flowbite():
 
 
 async def publish(model):
-    weave.init("openui-dev")
+    weave.init(os.getenv("WANDB_PROJECT", "default_project"))
 
     ds_dir = Path(__file__).parent / "datasets"
 

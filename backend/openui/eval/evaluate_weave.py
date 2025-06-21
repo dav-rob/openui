@@ -9,9 +9,22 @@ from typing import Optional
 from openai import AsyncOpenAI, RateLimitError
 from weave import Evaluation, Model, Dataset
 
+# Load environment variables from .env file BEFORE weave imports
+from pathlib import Path
+try:
+    from dotenv import load_dotenv
+    # Look for .env in parent directory (backend root)
+    env_path = Path(__file__).parent.parent.parent / ".env"
+    if env_path.exists():
+        load_dotenv(env_path)
+    else:
+        # Try current working directory
+        load_dotenv()
+except ImportError:
+    pass
+
 # from .model import EvaluateQualityModel
 import weave
-from pathlib import Path
 import base64
 import json
 from datetime import datetime
@@ -397,7 +410,7 @@ async def scores(prompt: str, model_output: dict) -> dict:
 
 async def run(row=0, bad=False):
     pt("Initializing weave")
-    weave.init("openui-dev")
+    weave.init(os.getenv("WANDB_PROJECT", "default_project"))
     model = OpenUIModel(SYSTEM_PROMPT)
     pt("Loading dataset")
     dataset = weave.ref("flowbite").get()
@@ -413,7 +426,7 @@ async def run(row=0, bad=False):
 
 async def eval(mod="gpt-3.5-turbo", screenshots=False):
     pt("Initializing weave")
-    weave.init("openui-dev")
+    weave.init(os.getenv("WANDB_PROJECT", "default_project"))
     model = OpenUIModel(prompt_template=SYSTEM_PROMPT, model_name=mod, take_screenshot=screenshots)
     pt("Loading dataset")
     dataset = weave.ref("eval:v0").get()
@@ -430,7 +443,7 @@ async def eval(mod="gpt-3.5-turbo", screenshots=False):
 
 
 def run_prompt_search(mod: str):
-    weave.init("openui-dev")
+    weave.init(os.getenv("WANDB_PROJECT", "default_project"))
     model = OpenUIModel(prompt_template=SYSTEM_PROMPT, model_name=mod)
     pt("Loading dataset")
     dataset = weave.ref("eval").get()
